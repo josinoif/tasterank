@@ -1,0 +1,75 @@
+/* Layout principal */
+.restaurantes-list-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Seção de filtros */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+/* Grid de restaurantes */
+.restaurantes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Sem resultados */
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.no-results h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.no-results p {
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .restaurantes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .filters-section {
+    flex-direction: column;
+  }
+}
