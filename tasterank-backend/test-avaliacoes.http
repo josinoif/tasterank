@@ -1,0 +1,79 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+@restauranteId = 3
+
+### Criar Avaliação para Restaurante
+POST {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 5,
+  "comentario": "Excelente! A melhor pizza que já comi!",
+  "autor": "João Silva"
+}
+
+### Criar Outra Avaliação
+POST {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 4,
+  "comentario": "Muito bom, mas o atendimento pode melhorar.",
+  "autor": "Maria Santos"
+}
+
+### Criar Avaliação Nota Baixa
+POST {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 2,
+  "comentario": "Esperava mais pela fama do lugar.",
+  "autor": "Pedro Oliveira"
+}
+
+### Listar Avaliações de um Restaurante
+GET {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes
+
+### Listar com Filtro de Nota Mínima
+GET {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes?notaMin=4
+
+### Listar com Paginação
+GET {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes?page=1&limit=5
+
+### Listar Todas as Avaliações (Admin)
+GET {{baseUrl}}/avaliacoes
+
+### Buscar Avaliação Específica
+GET {{baseUrl}}/avaliacoes/1
+
+### Atualizar Avaliação
+PUT {{baseUrl}}/avaliacoes/1
+Content-Type: application/json
+
+{
+  "nota": 5,
+  "comentario": "Comentário atualizado: Simplesmente perfeito!"
+}
+
+### Deletar Avaliação
+DELETE {{baseUrl}}/avaliacoes/2
+
+### Teste - Criar para Restaurante Inexistente
+POST {{baseUrl}}/restaurantes/999/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 5,
+  "comentario": "Teste",
+  "autor": "Teste"
+}
+
+### Teste - Validação (nota inválida)
+POST {{baseUrl}}/restaurantes/{{restauranteId}}/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 10,
+  "autor": "Teste"
+}

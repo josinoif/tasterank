@@ -8,6 +8,8 @@ const { requestLogger, errorLogger } = require('./middlewares/logger');
 const { generalLimiter } = require('./middlewares/rateLimiters');
 
 const restauranteRoutes = require('./routes/restauranteRoutes');
+const avaliacaoRoutes = require('./routes/avaliacaoRoutes');
+const avaliacaoStandaloneRoutes = require('./routes/avaliacaoStandaloneRoutes');
 
 const app = express();
 
@@ -52,6 +54,8 @@ app.get('/api/health', (req, res) => {
 
 // Rotas
 app.use('/api/restaurantes', restauranteRoutes);
+app.use('/api/restaurantes', avaliacaoRoutes); // Rotas aninhadas
+app.use('/api/avaliacoes', avaliacaoStandaloneRoutes); // Rotas standalone
 
 // 404
 app.use((req, res) => {
