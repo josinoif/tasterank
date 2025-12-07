@@ -45,7 +45,18 @@ const avaliacaoService = {
     } catch (error) {
       throw error.response?.data || error;
     }
+  },
+
+  getByRestaurante: async (restauranteId) => {
+    const response = await api.get(`/restaurantes/${restauranteId}/avaliacoes`);
+    return response.data.avaliacoes || [];
+  },
+  
+  delete: async (id) => {
+    const response = await api.delete(`/avaliacoes/${id}`);
+    return response.data;
   }
+
 };
 
 export default avaliacaoService;

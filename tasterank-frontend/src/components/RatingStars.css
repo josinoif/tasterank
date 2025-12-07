@@ -1,0 +1,51 @@
+.rating-stars {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.star {
+  color: #ddd;
+  font-size: 1.5rem;
+}
+
+.star.full {
+  color: #f39c12;
+}
+
+.star.half {
+  background: linear-gradient(90deg, #f39c12 50%, #ddd 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.star.empty {
+  color: #ddd;
+}
+
+/* Tamanhos */
+.rating-stars.size-small .star {
+  font-size: 1rem;
+}
+
+.rating-stars.size-medium .star {
+  font-size: 1.5rem;
+}
+
+.rating-stars.size-large .star {
+  font-size: 2rem;
+}
+
+/* Interativo */
+.rating-stars.interactive .star {
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.rating-stars.interactive .star:hover {
+  transform: scale(1.2);
+  color: #f39c12;
+}
