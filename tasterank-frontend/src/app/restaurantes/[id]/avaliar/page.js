@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import notificacao from '@/services/notificacao';
 import avaliacaoService from '@/services/avaliacaoService';
 import restauranteService from '@/services/restauranteService';
 import RatingStars from '@/components/RatingStars';
@@ -30,6 +31,7 @@ export default function AvaliacaoForm({ params }) {
       setRestaurante(data);
     } catch (err) {
       setError('Restaurante não encontrado');
+      notificacao.erro('Restaurante não encontrado');
     }
   };
   
@@ -66,6 +68,7 @@ export default function AvaliacaoForm({ params }) {
     e.preventDefault();
     
     if (!validarFormulario()) {
+      notificacao.aviso('Preencha todos os campos corretamente');
       return;
     }
     
@@ -83,7 +86,8 @@ export default function AvaliacaoForm({ params }) {
       
       await avaliacaoService.create(restaurante_id, dados);
       
-      alert('Avaliação enviada com sucesso!');
+      // Usar notificação ao invés de alert
+      notificacao.sucesso('Avaliação enviada com sucesso!');
       router.push(`/restaurantes/${id}`);
       
     } catch (err) {
@@ -189,35 +193,31 @@ export default function AvaliacaoForm({ params }) {
             id="comentario"
             value={comentario}
             onChange={handleComentarioChange}
-            placeholder="Conte-nos sobre sua experiência..."
+            placeholder="Compartilhe sua experiência..."
             rows={6}
             maxLength={500}
             className={errors.comentario ? 'error' : ''}
           />
-          <div className="textarea-footer">
-            <span className="char-count">
-              {comentario.length}/500 caracteres
-            </span>
-            {errors.comentario && (
-              <span className="error-message">{errors.comentario}</span>
-            )}
+          <div className="textarea-info">
+            <span className="char-count">{comentario.length}/500</span>
           </div>
+          {errors.comentario && (
+            <span className="error-message">{errors.comentario}</span>
+          )}
         </div>
         
         <div className="form-actions">
           <button
             type="button"
-            onClick={() => router.push(`/restaurantes/${id}`)}
+            onClick={() => router.back()}
             className="btn btn-secondary"
-            disabled={loading}
           >
-            Cancelar
+            Voltar
           </button>
-          
           <button
             type="submit"
+            disabled={loading}
             className="btn btn-primary"
-            disabled={loading || nota === 0 || !autor.trim()}
           >
             {loading ? 'Enviando...' : 'Enviar Avaliação'}
           </button>

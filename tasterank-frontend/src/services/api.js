@@ -1,18 +1,20 @@
 import axios from 'axios';
+import { tratarErroAPI, formatarErro } from './errorHandler';
+import notificacao from './notificacao';
 
 // Criar instância do Axios
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api',
-  timeout: process.env.NEXT_PUBLIC_API_TIMEOUT || 10000,
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT) || 10000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Interceptor de requisição (adicionar token, etc)
+// Request interceptor - adicionar token e logging
 api.interceptors.request.use(
   (config) => {
-    // Adicionar token se existir (usar typeof window para SSR-safe)
+    // Adicionar token se existir (SSR-safe)
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       if (token) {
@@ -20,7 +22,7 @@ api.interceptors.request.use(
       }
     }
     
-    // Log da requisição em desenvolvimento
+    // Log em desenvolvimento
     if (process.env.NODE_ENV === 'development') {
       console.log(`📤 ${config.method.toUpperCase()} ${config.url}`);
     }
@@ -33,49 +35,26 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor de resposta (tratar erros)
+// Response interceptor - tratar erros e notificar
 api.interceptors.response.use(
   (response) => {
-    // Log da resposta em desenvolvimento
+    // Log em desenvolvimento
     if (process.env.NODE_ENV === 'development') {
       console.log(`📥 ${response.config.method.toUpperCase()} ${response.config.url}`, response.data);
     }
-    
     return response;
   },
   (error) => {
-    // Tratar erros comuns
-    if (error.response) {
-      // Servidor respondeu com erro
-      const { status, data } = error.response;
-      
-      console.error(`❌ Erro ${status}:`, data);
-      
-      // Tratar códigos específicos
-      switch (status) {
-        case 401:
-          // Não autorizado - redirecionar para login
-          console.error('Não autorizado');
-          if (typeof window !== 'undefined') {
-            // window.location.href = '/login';
-          }
-          break;
-        case 404:
-          console.error('Recurso não encontrado');
-          break;
-        case 500:
-          console.error('Erro interno do servidor');
-          break;
-      }
-    } else if (error.request) {
-      // Requisição foi feita mas sem resposta
-      console.error('❌ Sem resposta do servidor:', error.request);
-    } else {
-      // Erro ao configurar requisição
-      console.error('❌ Erro:', error.message);
+    console.error('❌ Erro na resposta:', error);
+    
+    // Mostrar notificação automática (exceto se silencioso)
+    if (!error.config?.silencioso) {
+      const mensagem = tratarErroAPI(error);
+      notificacao.erro(mensagem);
     }
     
-    return Promise.reject(error);
+    // Retornar erro formatado
+    return Promise.reject(formatarErro(error));
   }
 );
 
