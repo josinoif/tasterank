@@ -146,3 +146,155 @@ exports.getStats = async (req, res) => {
     porCategoria
   });
 };
+
+
+/**
+ * UPDATE - Atualizar restaurante completo
+ * PUT /api/restaurantes/:id
+ */
+exports.update = async (req, res) => {
+  const { id } = req.params;
+  const { nome, categoria, endereco, telefone, descricao } = req.body;
+  
+  // Buscar restaurante
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  // Atualizar todos os campos
+  await restaurante.update({
+    nome,
+    categoria,
+    endereco,
+    telefone,
+    descricao
+  });
+  
+  res.json({
+    mensagem: 'Restaurante atualizado com sucesso',
+    restaurante
+  });
+};
+
+/**
+ * PATCH - Atualização parcial
+ * PATCH /api/restaurantes/:id
+ */
+exports.partialUpdate = async (req, res) => {
+  const { id } = req.params;
+  const camposPermitidos = ['nome', 'categoria', 'endereco', 'telefone', 'descricao'];
+  
+  // Buscar restaurante
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  // Filtrar apenas campos permitidos e presentes no body
+  const updates = {};
+  camposPermitidos.forEach(campo => {
+    if (req.body[campo] !== undefined) {
+      updates[campo] = req.body[campo];
+    }
+  });
+  
+  // Verificar se há algo para atualizar
+  if (Object.keys(updates).length === 0) {
+    throw new ApiError(400, 'Nenhum campo válido para atualizar');
+  }
+  
+  // Atualizar
+  await restaurante.update(updates);
+  
+  res.json({
+    mensagem: 'Restaurante atualizado parcialmente',
+    camposAtualizados: Object.keys(updates),
+    restaurante
+  });
+};
+
+/**
+ * DELETE - Soft delete (marca como inativo)
+ * DELETE /api/restaurantes/:id
+ */
+exports.softDelete = async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  if (!restaurante.ativo) {
+    throw new ApiError(400, 'Restaurante já está inativo');
+  }
+  
+  // Marcar como inativo ao invés de deletar
+  await restaurante.update({ ativo: false });
+  
+  res.json({
+    mensagem: 'Restaurante desativado com sucesso'
+  });
+};
+
+/**
+ * DELETE - Hard delete (remove permanentemente)
+ * DELETE /api/restaurantes/:id/permanente
+ */
+exports.hardDelete = async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  // Verificar se há avaliações associadas
+  const avaliacoesCount = await Avaliacao.count({
+    where: { restaurante_id: id }
+  });
+  
+  if (avaliacoesCount > 0) {
+    throw new ApiError(400, 
+      `Não é possível deletar. Existem ${avaliacoesCount} avaliações associadas. ` +
+      'Delete as avaliações primeiro ou use soft delete.'
+    );
+  }
+  
+  // Deletar permanentemente
+  await restaurante.destroy();
+  
+  res.json({
+    mensagem: 'Restaurante deletado permanentemente'
+  });
+};
+
+/**
+ * RESTORE - Reativar restaurante inativo
+ * POST /api/restaurantes/:id/restaurar
+ */
+exports.restore = async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  if (restaurante.ativo) {
+    throw new ApiError(400, 'Restaurante já está ativo');
+  }
+  
+  await restaurante.update({ ativo: true });
+  
+  res.json({
+    mensagem: 'Restaurante restaurado com sucesso',
+    restaurante
+  });
+};

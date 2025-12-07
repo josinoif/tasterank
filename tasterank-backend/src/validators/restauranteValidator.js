@@ -58,3 +58,54 @@ exports.queryValidation = [
     .isIn(['ASC', 'DESC'])
     .withMessage('Direção deve ser ASC ou DESC')
 ];
+
+exports.updateValidation = [
+  param('id')
+    .isInt({ min: 1 }).withMessage('ID inválido'),
+  
+  body('nome')
+    .trim()
+    .notEmpty().withMessage('Nome é obrigatório')
+    .isLength({ min: 3, max: 100 }).withMessage('Nome deve ter entre 3 e 100 caracteres'),
+  
+  body('categoria')
+    .trim()
+    .notEmpty().withMessage('Categoria é obrigatória')
+    .isIn(['Italiana', 'Japonesa', 'Brasileira', 'Mexicana', 'Árabe', 'Hamburgueria', 'Pizzaria', 'Vegetariana', 'Outra'])
+    .withMessage('Categoria inválida'),
+  
+  body('endereco')
+    .optional()
+    .trim(),
+  
+  body('telefone')
+    .optional()
+    .trim()
+    .matches(/^[\d\s\(\)\-\+]+$/).withMessage('Telefone inválido'),
+  
+  body('descricao')
+    .optional()
+    .trim()
+];
+
+exports.partialUpdateValidation = [
+  param('id')
+    .isInt({ min: 1 }).withMessage('ID inválido'),
+  
+  body('nome')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Nome não pode ser vazio')
+    .isLength({ min: 3, max: 100 }).withMessage('Nome deve ter entre 3 e 100 caracteres'),
+  
+  body('categoria')
+    .optional()
+    .trim()
+    .isIn(['Italiana', 'Japonesa', 'Brasileira', 'Mexicana', 'Árabe', 'Hamburgueria', 'Pizzaria', 'Vegetariana', 'Outra'])
+    .withMessage('Categoria inválida'),
+  
+  body('telefone')
+    .optional()
+    .trim()
+    .matches(/^[\d\s\(\)\-\+]+$/).withMessage('Telefone inválido')
+];

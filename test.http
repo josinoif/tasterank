@@ -56,3 +56,58 @@ Content-Type: {{contentType}}
   "nome": "AB",
   "categoria": "Inexistente"
 }
+
+### UPDATE Completo (PUT)
+PUT {{baseUrl}}/restaurantes/1
+Content-Type: {{contentType}}
+
+{
+  "nome": "Pizza Bella Premium",
+  "categoria": "Pizzaria",
+  "endereco": "Rua das Flores, 123 - Sala 10",
+  "telefone": "(11) 98765-4321",
+  "descricao": "A melhor pizza italiana da cidade!"
+}
+
+### UPDATE Parcial (PATCH) - Apenas nome
+PATCH {{baseUrl}}/restaurantes/1
+Content-Type: {{contentType}}
+
+{
+  "nome": "Pizza Bella Gourmet"
+}
+
+### UPDATE Parcial - Múltiplos campos
+PATCH {{baseUrl}}/restaurantes/1
+Content-Type: {{contentType}}
+
+{
+  "telefone": "(11) 3456-7890",
+  "descricao": "Pizza artesanal com ingredientes premium"
+}
+
+### Soft Delete (desativar)
+DELETE {{baseUrl}}/restaurantes/2
+
+### Restaurar restaurante
+POST {{baseUrl}}/restaurantes/2/restaurar
+
+### Hard Delete (permanente)
+DELETE {{baseUrl}}/restaurantes/2/permanente
+
+### Teste de validação - ID inválido
+PUT {{baseUrl}}/restaurantes/abc
+Content-Type: {{contentType}}
+
+{
+  "nome": "Teste"
+}
+
+### Teste - Atualizar inexistente
+PUT {{baseUrl}}/restaurantes/999
+Content-Type: {{contentType}}
+
+{
+  "nome": "Restaurante Inexistente",
+  "categoria": "Italiana"
+}
