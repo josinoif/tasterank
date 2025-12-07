@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const restauranteRoutes = require('./routes/restauranteRoutes');
+
 require('dotenv').config();
 
 const { errorHandler } = require('./middlewares/errorHandler');
@@ -26,6 +28,8 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+
+
 // Parsing de body
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -46,7 +50,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Rotas da API
-// app.use('/api/restaurantes', restauranteRoutes);
+app.use('/api/restaurantes', restauranteRoutes);
 // app.use('/api/avaliacoes', avaliacaoRoutes);
 
 // Rota 404

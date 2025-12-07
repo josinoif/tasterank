@@ -1,0 +1,58 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+@contentType = application/json
+
+### Health Check
+GET {{baseUrl}}/../health
+
+### Criar Restaurante
+POST {{baseUrl}}/restaurantes
+Content-Type: {{contentType}}
+
+{
+  "nome": "Sushi Master",
+  "categoria": "Japonesa",
+  "endereco": "Av. Paulista, 1000",
+  "telefone": "(11) 3456-7890",
+  "descricao": "Sushi autêntico japonês"
+}
+
+### Criar Outro Restaurante
+POST {{baseUrl}}/restaurantes
+Content-Type: {{contentType}}
+
+{
+  "nome": "Burger House",
+  "categoria": "Hamburgueria",
+  "endereco": "Rua Central, 500"
+}
+
+### Listar Todos
+GET {{baseUrl}}/restaurantes
+
+### Listar com Paginação
+GET {{baseUrl}}/restaurantes?page=1&limit=5
+
+### Buscar por Nome
+GET {{baseUrl}}/restaurantes?busca=sushi
+
+### Filtrar por Categoria
+GET {{baseUrl}}/restaurantes?categoria=Japonesa
+
+### Buscar por ID
+GET {{baseUrl}}/restaurantes/1
+
+### Buscar por Categoria (rota específica)
+GET {{baseUrl}}/restaurantes/categoria/Italiana
+
+### Estatísticas
+GET {{baseUrl}}/restaurantes/stats
+
+### Teste de Validação (deve falhar)
+POST {{baseUrl}}/restaurantes
+Content-Type: {{contentType}}
+
+{
+  "nome": "AB",
+  "categoria": "Inexistente"
+}
