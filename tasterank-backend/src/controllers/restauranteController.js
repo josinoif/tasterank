@@ -3,6 +3,7 @@ const { ApiError } = require('../middlewares/errorHandler');
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
 const { retryDatabaseOperation } = require('../utils/retry');
+const { cache } = require('../utils/cache');
 
 
 /**
