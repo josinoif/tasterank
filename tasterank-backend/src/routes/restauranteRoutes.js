@@ -27,12 +27,24 @@ router.get('/',
   asyncHandler(restauranteController.findAll)
 );
 
-// Estatísticas
+// Estatísticas e agregados (colocar ANTES das rotas com :id)
 router.get('/stats',
   asyncHandler(restauranteController.getStats)
 );
 
-// READ por categoria
+router.get('/top-rated',
+  asyncHandler(restauranteController.getTopRated)
+);
+
+router.get('/mais-avaliados',
+  asyncHandler(restauranteController.getMostReviewed)
+);
+
+router.get('/por-categoria',
+  asyncHandler(restauranteController.getByCategoria)
+);
+
+// READ por categoria específica
 router.get('/categoria/:categoria',
   asyncHandler(restauranteController.findByCategoria)
 );
@@ -77,6 +89,13 @@ router.post('/:id/restaurar',
   idValidation,
   validate,
   asyncHandler(restauranteController.restore)
+);
+
+// Detalhes completos
+router.get('/:id/completo',
+  idValidation,
+  validate,
+  asyncHandler(restauranteController.findOneComplete)
 );
 
 module.exports = router;

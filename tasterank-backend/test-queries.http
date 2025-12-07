@@ -1,0 +1,17 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+
+### Top 10 Mais Bem Avaliados
+GET {{baseUrl}}/restaurantes/top-rated?limit=10
+
+### Top 5 Mais Avaliados
+GET {{baseUrl}}/restaurantes/mais-avaliados?limit=5
+
+### Estatísticas por Categoria
+GET {{baseUrl}}/restaurantes/por-categoria
+
+### Detalhes Completos de Restaurante
+GET {{baseUrl}}/restaurantes/1/completo
+
+### Buscar Restaurantes com Avaliações Alta
+GET {{baseUrl}}/restaurantes?avaliacaoMin=4

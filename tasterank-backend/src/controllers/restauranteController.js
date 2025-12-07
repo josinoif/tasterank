@@ -1,6 +1,7 @@
 const { Restaurante, Avaliacao } = require('../models');
 const { ApiError } = require('../middlewares/errorHandler');
 const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 /**
  * CREATE - Criar novo restaurante
@@ -296,5 +297,151 @@ exports.restore = async (req, res) => {
   res.json({
     mensagem: 'Restaurante restaurado com sucesso',
     restaurante
+  });
+};
+
+
+/**
+ * Restaurantes mais bem avaliados
+ * GET /api/restaurantes/top-rated
+ */
+exports.getTopRated = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 10;
+  
+  const restaurantes = await Restaurante.findAll({
+    where: { ativo: true },
+    attributes: [
+      'id',
+      'nome',
+      'categoria',
+      [sequelize.fn('COUNT', sequelize.col('avaliacoes.id')), 'total_avaliacoes'],
+      [sequelize.fn('AVG', sequelize.col('avaliacoes.nota')), 'media_notas']
+    ],
+    include: [{
+      model: Avaliacao,
+      as: 'avaliacoes',
+      attributes: []
+    }],
+    group: ['restaurante.id'],
+    having: sequelize.where(
+      sequelize.fn('COUNT', sequelize.col('avaliacoes.id')),
+      { [Op.gte]: 3 }  // Mínimo 3 avaliações
+    ),
+    order: [[sequelize.literal('media_notas'), 'DESC']],
+    limit,
+    subQuery: false
+  });
+  
+  res.json({
+    mensagem: `Top ${limit} restaurantes mais bem avaliados`,
+    restaurantes
+  });
+};
+
+/**
+ * Restaurantes com mais avaliações
+ * GET /api/restaurantes/mais-avaliados
+ */
+exports.getMostReviewed = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 10;
+  
+  const restaurantes = await Restaurante.findAll({
+    where: { ativo: true },
+    attributes: [
+      'id',
+      'nome',
+      'categoria',
+      [sequelize.fn('COUNT', sequelize.col('avaliacoes.id')), 'total_avaliacoes']
+    ],
+    include: [{
+      model: Avaliacao,
+      as: 'avaliacoes',
+      attributes: []
+    }],
+    group: ['restaurante.id'],
+    order: [[sequelize.literal('total_avaliacoes'), 'DESC']],
+    limit,
+    subQuery: false
+  });
+  
+  res.json({
+    mensagem: `Top ${limit} restaurantes mais avaliados`,
+    restaurantes
+  });
+};
+
+/**
+ * Restaurantes por categoria com estatísticas
+ * GET /api/restaurantes/por-categoria
+ */
+exports.getByCategoria = async (req, res) => {
+  const categorias = await Restaurante.findAll({
+    where: { ativo: true },
+    attributes: [
+      'categoria',
+      // total de restaurantes por categoria (DISTINCT evita contagem duplicada pelo JOIN)
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('restaurante.id'))), 'total_restaurantes'],
+      // total de avaliações por categoria
+      [sequelize.fn('COUNT', sequelize.col('avaliacoes.id')), 'total_avaliacoes'],
+      // média de notas na categoria
+      [sequelize.fn('AVG', sequelize.col('avaliacoes.nota')), 'media_categoria']
+    ],
+    include: [{
+      model: Avaliacao,
+      as: 'avaliacoes',
+      attributes: []
+    }],
+    group: ['restaurante.categoria'],
+    order: [[sequelize.literal('total_restaurantes'), 'DESC']],
+    raw: true
+  });
+  
+  res.json({
+    mensagem: 'Estatísticas por categoria',
+    categorias
+  });
+};
+
+/**
+ * Buscar restaurantes com detalhes completos
+ * GET /api/restaurantes/:id/completo
+ */
+exports.findOneComplete = async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurante = await Restaurante.findByPk(id, {
+    include: [{
+      model: Avaliacao,
+      as: 'avaliacoes',
+      order: [['created_at', 'DESC']],
+      limit: 10,
+      separate: true
+    }]
+  });
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  // Calcular estatísticas manualmente
+  const avaliacoes = await Avaliacao.findAll({
+    where: { restaurante_id: id },
+    attributes: ['nota']
+  });
+  
+  const distribuicao = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  avaliacoes.forEach(a => distribuicao[a.nota]++);
+  
+  const stats = {
+    total: avaliacoes.length,
+    media: avaliacoes.length > 0 
+      ? (avaliacoes.reduce((sum, a) => sum + a.nota, 0) / avaliacoes.length).toFixed(2)
+      : 0,
+    distribuicao
+  };
+  
+  res.json({
+    ...restaurante.toJSON(),
+    estatisticas: stats
   });
 };

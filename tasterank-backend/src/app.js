@@ -53,8 +53,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Rotas
-app.use('/api/restaurantes', restauranteRoutes);
 app.use('/api/restaurantes', avaliacaoRoutes); // Rotas aninhadas
+app.use('/api/restaurantes', restauranteRoutes);
 app.use('/api/avaliacoes', avaliacaoStandaloneRoutes); // Rotas standalone
 
 // 404
