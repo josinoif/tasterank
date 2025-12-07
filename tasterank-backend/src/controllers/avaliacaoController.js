@@ -27,6 +27,9 @@ exports.create = async (req, res) => {
     comentario,
     autor
   });
+
+  // Recalcular média
+  await restaurante.recalcularMedia();
   
   res.status(201).json({
     mensagem: 'Avaliação criada com sucesso',

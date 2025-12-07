@@ -66,7 +66,51 @@ const Restaurante = sequelize.define('restaurante', {
 }, {
   tableName: 'restaurantes',
   timestamps: true,
-  underscored: true
+  underscored: true,
+  indexes: [
+    {
+      fields: ['categoria'] // Busca por categoria
+    },
+    {
+      fields: ['avaliacao_media'] // Ordenação por média
+    },
+    {
+      fields: ['nome'] // Busca por nome
+    },
+    {
+      fields: ['ativo'] // Filtro de ativos
+    }
+  ]
 });
+
+// Método de instância para recalcular média
+Restaurante.prototype.recalcularMedia = async function() {
+  const Avaliacao = require('./Avaliacao');
+  
+  const result = await Avaliacao.findOne({
+    where: { restaurante_id: this.id },
+    attributes: [
+      [sequelize.fn('AVG', sequelize.col('nota')), 'media'],
+      [sequelize.fn('COUNT', sequelize.col('id')), 'total']
+    ],
+    raw: true
+  });
+  
+  const media = result.media ? parseFloat(result.media).toFixed(2) : 0;
+  
+  await this.update({ avaliacao_media: media });
+  
+  return media;
+};
+
+// Método estático para recalcular múltiplos
+Restaurante.recalcularMedias = async function(restauranteIds) {
+  for (const id of restauranteIds) {
+    const restaurante = await Restaurante.findByPk(id);
+    if (restaurante) {
+      await restaurante.recalcularMedia();
+    }
+  }
+};
 
 module.exports = Restaurante;

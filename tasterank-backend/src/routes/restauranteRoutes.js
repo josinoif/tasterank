@@ -98,5 +98,25 @@ router.get('/:id/completo',
   asyncHandler(restauranteController.findOneComplete)
 );
 
+router.post('/:id/recalcular-media',
+  idValidation,
+  validate,
+  asyncHandler(restauranteController.recalcularMedia)
+);
+
+router.post('/recalcular-todas-medias',
+  asyncHandler(restauranteController.recalcularTodasMedias)
+);
+
+router.post('/:id/recalcular-media',
+  idValidation,
+  validate,
+  asyncHandler(restauranteController.recalcularMedia)
+);
+
+router.post('/recalcular-todas-medias',
+  asyncHandler(restauranteController.recalcularTodasMedias)
+);
+
 module.exports = router;
 

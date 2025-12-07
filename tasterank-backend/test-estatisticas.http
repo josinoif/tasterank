@@ -1,0 +1,33 @@
+@baseUrl = http://localhost:3000/api
+
+### Criar primeira avaliação
+POST {{baseUrl}}/restaurantes/1/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 5,
+  "comentario": "Excelente!",
+  "autor": "João"
+}
+
+### Verificar média atualizada
+GET {{baseUrl}}/restaurantes/1
+
+### Criar segunda avaliação
+POST {{baseUrl}}/restaurantes/1/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 3,
+  "comentario": "Regular",
+  "autor": "Maria"
+}
+
+### Verificar nova média (deve ser 4.0)
+GET {{baseUrl}}/restaurantes/1
+
+### Recalcular média manualmente
+POST {{baseUrl}}/restaurantes/1/recalcular-media
+
+### Dashboard de estatísticas
+GET {{baseUrl}}/restaurantes/stats

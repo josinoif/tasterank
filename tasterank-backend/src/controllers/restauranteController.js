@@ -30,6 +30,16 @@ exports.create = async (req, res) => {
  * Query params: page, limit, categoria, busca
  */
 exports.findAll = async (req, res) => {
+
+  const cacheKey = `restaurantes:${JSON.stringify(req.query)}`;
+  
+  // Verificar cache
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    console.log('✅ Retornando do cache');
+    return res.json(cached);
+  }
+
   // Paginação
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -69,14 +79,20 @@ exports.findAll = async (req, res) => {
       exclude: ['ativo'] // Não retornar campo ativo
     }
   });
-  
-  res.json({
+
+  result = {
     total: count,
     totalPaginas: Math.ceil(count / limit),
     paginaAtual: page,
     limite: limit,
     restaurantes: rows
-  });
+  }
+  
+  // Armazenar no cache por 5 minutos
+  cache.set(cacheKey, result, 300);
+  console.log('✅ Armazenado no cache');
+
+  res.json(result);
 };
 
 /**
@@ -443,5 +459,115 @@ exports.findOneComplete = async (req, res) => {
   res.json({
     ...restaurante.toJSON(),
     estatisticas: stats
+  });
+};
+
+exports.recalcularMedia = async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurante = await Restaurante.findByPk(id);
+  
+  if (!restaurante) {
+    throw new ApiError(404, 'Restaurante não encontrado');
+  }
+  
+  const mediaAtualizada = await restaurante.recalcularMedia();
+  
+  res.json({
+    mensagem: 'Média recalculada com sucesso',
+    restaurante: {
+      id: restaurante.id,
+      nome: restaurante.nome,
+      avaliacaoMedia: mediaAtualizada
+    }
+  });
+};
+
+// Recalcular todas as médias (admin)
+exports.recalcularTodasMedias = async (req, res) => {
+  const restaurantes = await Restaurante.findAll({
+    where: { ativo: true }
+  });
+  
+  let contador = 0;
+  for (const restaurante of restaurantes) {
+    await restaurante.recalcularMedia();
+    contador++;
+  }
+  
+  res.json({
+    mensagem: `${contador} médias recalculadas com sucesso`
+  });
+};
+
+
+exports.getDashboardStats = async (req, res) => {
+  // Total de restaurantes
+  const totalRestaurantes = await Restaurante.count({
+    where: { ativo: true }
+  });
+  
+  // Total de avaliações
+  const totalAvaliacoes = await Avaliacao.count();
+  
+  // Média geral de todas as avaliações
+  const mediaGeral = await Avaliacao.findOne({
+    attributes: [
+      [sequelize.fn('AVG', sequelize.col('nota')), 'media']
+    ],
+    raw: true
+  });
+  
+  // Distribuição de notas
+  const distribuicaoNotas = await Avaliacao.findAll({
+    attributes: [
+      'nota',
+      [sequelize.fn('COUNT', sequelize.col('id')), 'quantidade']
+    ],
+    group: ['nota'],
+    order: [['nota', 'ASC']],
+    raw: true
+  });
+  
+  // Top 5 categorias
+  const topCategorias = await Restaurante.findAll({
+    where: { ativo: true },
+    attributes: [
+      'categoria',
+      [sequelize.fn('COUNT', sequelize.col('restaurante.id')), 'quantidade'],
+      [sequelize.fn('AVG', sequelize.col('avaliacao_media')), 'media']
+    ],
+    group: ['categoria'],
+    order: [[sequelize.literal('quantidade'), 'DESC']],
+    limit: 5,
+    raw: true
+  });
+  
+  // Avaliações por mês (últimos 6 meses)
+  const seisMesesAtras = new Date();
+  seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
+  
+  const avaliacoesPorMes = await Avaliacao.findAll({
+    where: {
+      created_at: { [Op.gte]: seisMesesAtras }
+    },
+    attributes: [
+      [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('created_at')), 'mes'],
+      [sequelize.fn('COUNT', sequelize.col('id')), 'quantidade']
+    ],
+    group: [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('created_at'))],
+    order: [[sequelize.fn('DATE_TRUNC', 'month', sequelize.col('created_at')), 'ASC']],
+    raw: true
+  });
+  
+  res.json({
+    resumo: {
+      totalRestaurantes,
+      totalAvaliacoes,
+      mediaGeral: parseFloat(mediaGeral.media || 0).toFixed(2)
+    },
+    distribuicaoNotas,
+    topCategorias,
+    avaliacoesPorMes
   });
 };
