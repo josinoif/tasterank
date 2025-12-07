@@ -3,13 +3,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const { errorHandler } = require('./middlewares/errorHandler');
+const { errorHandler, sequelizeErrorHandler } = require('./middlewares/errorHandler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const { generalLimiter } = require('./middlewares/rateLimiters');
 
 const restauranteRoutes = require('./routes/restauranteRoutes');
 const avaliacaoRoutes = require('./routes/avaliacaoRoutes');
 const avaliacaoStandaloneRoutes = require('./routes/avaliacaoStandaloneRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 
 const app = express();
 
@@ -44,18 +45,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Logging
 app.use(requestLogger);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
-});
+
+
 
 // Rotas
 app.use('/api/restaurantes', avaliacaoRoutes); // Rotas aninhadas
 app.use('/api/restaurantes', restauranteRoutes);
 app.use('/api/avaliacoes', avaliacaoStandaloneRoutes); // Rotas standalone
+app.use('/api/health', healthRoutes);
+
 
 // 404
 app.use((req, res) => {
@@ -64,6 +62,9 @@ app.use((req, res) => {
 
 // Error handlers
 app.use(errorLogger);
+app.use(sequelizeErrorHandler);
 app.use(errorHandler);
+
+
 
 module.exports = app;

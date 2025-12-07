@@ -2,6 +2,8 @@ const { Restaurante, Avaliacao } = require('../models');
 const { ApiError } = require('../middlewares/errorHandler');
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
+const { retryDatabaseOperation } = require('../utils/retry');
+
 
 /**
  * CREATE - Criar novo restaurante
@@ -10,13 +12,15 @@ const { sequelize } = require('../config/database');
 exports.create = async (req, res) => {
   const { nome, categoria, endereco, telefone, descricao } = req.body;
   
-  const restaurante = await Restaurante.create({
+
+  const restaurante = await retryDatabaseOperation(async () => Restaurante.create({
     nome,
     categoria,
     endereco,
     telefone,
     descricao
-  });
+  }));
+
   
   res.status(201).json({
     mensagem: 'Restaurante criado com sucesso',

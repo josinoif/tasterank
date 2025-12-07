@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:3000/api
+
+### Teste - Validação de campo obrigatório
+POST {{baseUrl}}/restaurantes
+Content-Type: application/json
+
+{
+  "categoria": "Italiana"
+}
+
+### Teste - Nota inválida
+POST {{baseUrl}}/restaurantes/1/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 10,
+  "autor": "Teste"
+}
+
+### Teste - Restaurante duplicado
+POST {{baseUrl}}/restaurantes
+Content-Type: application/json
+
+{
+  "nome": "Pizza Bella",
+  "categoria": "Italiana",
+  "endereco": "Rua das Flores, 123"
+}
+
+### Teste - FK inválida
+POST {{baseUrl}}/restaurantes/9999/avaliacoes
+Content-Type: application/json
+
+{
+  "nota": 5,
+  "comentario": "Teste",
+  "autor": "João"
+}
+
+### Teste - Deletar com relacionamentos
+DELETE {{baseUrl}}/restaurantes/1/permanente
+
+### Health check do banco
+GET {{baseUrl}}/health/database

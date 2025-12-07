@@ -81,4 +81,100 @@ const asyncHandler = (fn) => {
   };
 };
 
-module.exports = { ApiError, errorHandler, asyncHandler };
+
+const sequelizeErrorHandler = (err, req, res, next) => {
+  console.error('❌ Erro do Sequelize:', err.name);
+  
+  // Erro de validação
+  if (err.name === 'SequelizeValidationError') {
+    const errors = err.errors.map(e => ({
+      campo: e.path,
+      mensagem: e.message,
+      tipo: e.type,
+      valorInvalido: e.value
+    }));
+    
+    return res.status(400).json({
+      error: 'Erro de validação',
+      detalhes: errors
+    });
+  }
+  
+  // Violação de unicidade
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    const camposDuplicados = err.errors.map(e => e.path);
+    
+    return res.status(409).json({
+      error: 'Registro duplicado',
+      mensagem: `Já existe um registro com ${camposDuplicados.join(', ')}`,
+      campos: camposDuplicados
+    });
+  }
+  
+  // Violação de chave estrangeira
+  if (err.name === 'SequelizeForeignKeyConstraintError') {
+    let mensagem = 'Violação de integridade referencial';
+    
+    // Detectar tipo de violação
+    if (err.parent.code === '23503') { // PostgreSQL FK violation
+      if (err.original.message.includes('insert') || err.original.message.includes('update')) {
+        mensagem = 'O registro relacionado não existe';
+      } else if (err.original.message.includes('delete')) {
+        mensagem = 'Não é possível deletar pois existem registros relacionados';
+      }
+    }
+    
+    return res.status(400).json({
+      error: 'Erro de integridade referencial',
+      mensagem,
+      detalhes: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+  
+  // Erro de conexão
+  if (err.name === 'SequelizeConnectionError' || 
+      err.name === 'SequelizeConnectionRefusedError') {
+    console.error('❌ Erro de conexão com banco de dados');
+    
+    return res.status(503).json({
+      error: 'Serviço temporariamente indisponível',
+      mensagem: 'Não foi possível conectar ao banco de dados. Tente novamente em instantes.'
+    });
+  }
+  
+  // Timeout
+  if (err.name === 'SequelizeTimeoutError') {
+    return res.status(408).json({
+      error: 'Timeout',
+      mensagem: 'A operação demorou muito tempo. Tente novamente.'
+    });
+  }
+  
+  // Erro de sintaxe SQL
+  if (err.name === 'SequelizeDatabaseError') {
+    console.error('SQL Error:', err.parent?.message);
+    
+    return res.status(500).json({
+      error: 'Erro no banco de dados',
+      mensagem: process.env.NODE_ENV === 'development' 
+        ? err.message 
+        : 'Erro ao processar a operação'
+    });
+  }
+  
+  // Erro não tratado do Sequelize
+  if (err.name && err.name.startsWith('Sequelize')) {
+    return res.status(500).json({
+      error: 'Erro no banco de dados',
+      tipo: err.name,
+      mensagem: process.env.NODE_ENV === 'development' 
+        ? err.message 
+        : 'Erro interno do servidor'
+    });
+  }
+  
+  // Passar para o próximo handler se não for erro do Sequelize
+  next(err);
+};
+
+module.exports = { ApiError, errorHandler, asyncHandler, sequelizeErrorHandler };
