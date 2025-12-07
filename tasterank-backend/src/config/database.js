@@ -1,6 +1,20 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Configuração do pool de conexões
+const poolConfig = {
+  max: 5,           // Máximo de conexões simultâneas
+  min: 0,           // Mínimo de conexões mantidas
+  acquire: 30000,   // Tempo máximo para adquirir conexão (30s)
+  idle: 10000,      // Tempo que conexão fica idle antes de ser liberada
+  evict: 1000       // Intervalo para verificar conexões idle
+};
+
+// Configuração de logging
+const logging = process.env.NODE_ENV === 'development' 
+  ? (msg) => console.log(`[Sequelize] ${msg}`)
+  : false;
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -9,32 +23,52 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    pool: {
-      max: 5,           // Máximo de conexões simultâneas
-      min: 0,           // Mínimo de conexões
-      acquire: 30000,   // Tempo máximo para obter conexão (ms)
-      idle: 10000       // Tempo máximo de conexão ociosa (ms)
+    logging,
+    pool: poolConfig,
+    dialectOptions: {
+      // Para produção com SSL
+      ...(process.env.NODE_ENV === 'production' && {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      })
     },
     define: {
-      timestamps: true,        // Adiciona createdAt e updatedAt
-      underscored: true,      // Usa snake_case para colunas
-      freezeTableName: true   // Não pluraliza nomes de tabelas
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true
     }
   }
 );
 
-// Testar conexão
-async function testConnection() {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Conexão com banco de dados estabelecida com sucesso!');
-  } catch (error) {
-    console.error('❌ Erro ao conectar ao banco de dados:', error);
-    process.exit(1);
+// Função para testar conexão com retry
+async function connectWithRetry(retries = 5, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await sequelize.authenticate();
+      console.log('✅ Conexão com PostgreSQL estabelecida');
+      return true;
+    } catch (error) {
+      console.error(`❌ Tentativa ${i + 1}/${retries} falhou:`, error.message);
+      
+      if (i < retries - 1) {
+        console.log(`⏳ Aguardando ${delay / 1000}s antes de tentar novamente...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
   }
+  
+  console.error('❌ Não foi possível conectar ao banco de dados após várias tentativas');
+  process.exit(1);
 }
 
-testConnection();
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n⚠️  Encerrando conexões com banco de dados...');
+  await sequelize.close();
+  console.log('✅ Conexões fechadas');
+  process.exit(0);
+});
 
-module.exports = sequelize;
+module.exports = { sequelize, connectWithRetry };
