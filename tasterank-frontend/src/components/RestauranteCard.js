@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import './RestauranteCard.css';
 
 export default function RestauranteCard({ restaurante }) {
-  const { id, nome, categoria, endereco, avaliacao_media } = restaurante;
+  const { id, nome, categoria, endereco, avaliacao_media, imagem } = restaurante;
   
   const renderStars = (rating) => {
     const stars = [];
@@ -26,6 +27,20 @@ export default function RestauranteCard({ restaurante }) {
   
   return (
     <Link href={`/restaurantes/${id}`} className="restaurante-card">
+      {imagem && (
+        <div className="card-image">
+          <Image
+            src={imagem}
+            alt={nome}
+            width={300}
+            height={200}
+            priority={false}
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200'%3E%3Crect fill='%23f0f0f0'/%3E%3C/svg%3E"
+          />
+        </div>
+      )}
+      
       <div className="card-header">
         <h3>{nome}</h3>
         <span className="categoria-badge">{categoria}</span>
